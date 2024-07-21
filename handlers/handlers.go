@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+
+	"github.com/labstack/echo/v4"
 )
 
 /*
@@ -23,6 +26,9 @@ import (
   ※ポインタ型を渡すことは「参照渡し」に該当する
 */
 
+/*
+  標準パッケージを使ったハンドラ関数
+*/
 // GET /hello のハンドラ
 func HelloHandler(w http.ResponseWriter, req *http.Request) {
 	// GETメソッド以外は許可しない
@@ -65,8 +71,8 @@ func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	// GETメソッドのリクエストに対してレスポンスを返す
 	articleID := 1
-	resString := fmt.Sprintf("Article No.%d\n", articleID)
-	io.WriteString(w, resString)
+	resStr := fmt.Sprintf("Article No.%d\n", articleID)
+	io.WriteString(w, resStr)
 }
 
 // POST /article/nice のハンドラ
@@ -89,4 +95,48 @@ func PostCommentHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	// POSTメソッドのリクエストに対してレスポンスを返す
 	io.WriteString(w, "Posting Comment...\n")
+}
+
+/*
+Echoを使ったハンドラ関数
+*/
+func EchoHelloHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello, World\n")
+}
+
+func EchoPostArticleHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Posting Article...\n")
+}
+
+func EchoArticleListHandler(c echo.Context) error {
+	pageStr := c.QueryParam("page")
+	if pageStr == "" {
+		pageStr = "1" // デフォルトページを1に設定
+	}
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page <= 0 {
+		return c.String(http.StatusBadRequest, "Invalid or missing 'page' query parameter\n")
+	}
+	resStr := fmt.Sprintf("Article List (page %d)\n", page)
+	return c.String(http.StatusOK, resStr)
+}
+
+func EchoArticleDetailHandler(c echo.Context) error {
+	articleId, err := strconv.Atoi(c.Param("articleId"))
+	if err != nil || articleId < 0 {
+		// errをそのまま返すと500番（Internal Server Error）になるため、400番（Bad Request）を返す
+		// 負の数も不正なパラメータとして扱う
+		return c.String(http.StatusBadRequest, "Invalid query parameter\n")
+	}
+	resStr := fmt.Sprintf("Article No.%v\n", articleId)
+
+	return c.String(http.StatusOK, resStr)
+}
+
+func EchoPostNiceHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Posting Nice...\n")
+}
+
+func EchoPostCommentHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Posting Comment...\n")
 }
