@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"go-myapi/models"
 	"io"
 	"net/http"
 	"strconv"
@@ -105,20 +106,31 @@ func EchoHelloHandler(c echo.Context) error {
 }
 
 func EchoPostArticleHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "Posting Article...\n")
+	article := models.Article1
+	err := c.JSONPretty(http.StatusOK, article, "    ")
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "fail to encode json\n")
+	}
+	return nil
 }
 
 func EchoArticleListHandler(c echo.Context) error {
 	pageStr := c.QueryParam("page")
 	if pageStr == "" {
-		pageStr = "1" // デフォルトページを1に設定
+		pageStr = "1"
 	}
 	page, err := strconv.Atoi(pageStr)
-	if err != nil || page <= 0 {
-		return c.String(http.StatusBadRequest, "Invalid or missing 'page' query parameter\n")
+	if err != nil || page < 1 {
+		return c.String(http.StatusBadRequest, "Invalid or missing 'page' query parameter")
 	}
-	resStr := fmt.Sprintf("Article List (page %d)\n", page)
-	return c.String(http.StatusOK, resStr)
+	// ダミーデータを使用する
+	articles := []models.Article{models.Article1, models.Article2}
+	// JSON()とJSONPretty()の機能的な違いは整形するか否か
+	// JSONPretty()はデバッグ目的で使用することが推奨（整形する分、オーバーヘッドが増えるため）
+	if err := c.JSONPretty(http.StatusOK, articles, "    "); err != nil {
+		return c.String(http.StatusInternalServerError, "fail to encode json")
+	}
+	return nil
 }
 
 func EchoArticleDetailHandler(c echo.Context) error {
