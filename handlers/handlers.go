@@ -1,14 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
-	"go-myapi/helpers"
 	"go-myapi/models"
 	"io"
 	"net/http"
 	"strconv"
-
-	"github.com/labstack/echo/v4"
 )
 
 /*
@@ -28,9 +27,6 @@ import (
   ※ポインタ型を渡すことは「参照渡し」に該当する
 */
 
-/*
-  標準パッケージを使ったハンドラ関数
-*/
 // GET /hello のハンドラ
 func HelloHandler(w http.ResponseWriter, req *http.Request) {
 	// GETメソッド以外は許可しない
@@ -44,13 +40,39 @@ func HelloHandler(w http.ResponseWriter, req *http.Request) {
 
 // POST /article のハンドラ
 func PostArticleHandler(w http.ResponseWriter, req *http.Request) {
-	// POSTメソッド以外は許可しない
-	if req.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+	// 1. リクエストボディのデータを格納するためのバイトスライスを用意する処理
+	length, err := strconv.Atoi(req.Header.Get("Content-Length"))
+	if err != nil {
+		http.Error(w, "cannot get content length\n", http.StatusBadRequest)
 		return
 	}
-	// POSTメソッドのリクエストに対してレスポンスを返す
-	io.WriteString(w, "Posting Article...\n")
+	reqBodybuffer := make([]byte, length)
+
+	// 2. リクエストボディからデータを読み取り、reqBodybufferに格納
+	if _, err := req.Body.Read(reqBodybuffer); !errors.Is(err, io.EOF) {
+		http.Error(w, "fail to get request body\n", http.StatusBadRequest)
+		return
+	}
+
+	// 3. ボディを Close する
+	defer req.Body.Close()
+
+	// 4. JSONデータを構造体にデコード
+	var reqArticle models.Article
+	if err := json.Unmarshal(reqBodybuffer, &reqArticle); err != nil {
+		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
+		return
+	}
+
+	// 5. レスポンス用のJSONデータを生成
+	article := reqArticle
+	jsonData, err := json.Marshal(article)
+	if err != nil {
+		http.Error(w, "fail to encode json\n", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(jsonData)
 }
 
 // GET /article/list のハンドラ
@@ -66,15 +88,24 @@ func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
 
 // GET /article/1 のハンドラ
 func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
-	// GETメソッド以外は許可しない
-	if req.Method != http.MethodGet {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
+	// クエリパラメータを取得
+	queryMap := req.URL.Query()
+
+	// pageの値を取得
+	var page int
+	if p, ok := queryMap["page"]; ok && len(p) > 0 {
+		var err error
+		page, err = strconv.Atoi(p[0])
+		if err != nil {
+			http.Error(w, "Invalid query parameter", http.StatusBadRequest)
+			return
+		}
+	} else {
+		page = 1
 	}
-	// GETメソッドのリクエストに対してレスポンスを返す
-	articleID := 1
-	resStr := fmt.Sprintf("Article No.%d\n", articleID)
-	io.WriteString(w, resStr)
+
+	resString := fmt.Sprintf("Article List (page %d)\n", page)
+	io.WriteString(w, resString)
 }
 
 // POST /article/nice のハンドラ
@@ -97,63 +128,4 @@ func PostCommentHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	// POSTメソッドのリクエストに対してレスポンスを返す
 	io.WriteString(w, "Posting Comment...\n")
-}
-
-/*
-Echoを使ったハンドラ関数
-*/
-func EchoHelloHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World\n")
-}
-
-func EchoPostArticleHandler(c echo.Context) error {
-	article := models.Article1
-	err := c.JSONPretty(http.StatusOK, article, "    ")
-	if err != nil {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
-	}
-	return nil
-}
-
-func EchoArticleListHandler(c echo.Context) error {
-	pageStr := c.QueryParam("page")
-	if pageStr == "" {
-		pageStr = "1"
-	}
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusBadRequest, "Invalid or missing 'page' query parameter")
-	}
-	articles := []models.Article{models.Article1, models.Article2}
-	// JSON()とJSONPretty()の機能的な違いは整形するか否か
-	// JSONPretty()はデバッグ目的で使用することが推奨（整形する分、オーバーヘッドが増えるため）
-	if err := c.JSONPretty(http.StatusOK, articles, "    "); err != nil {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
-	}
-	return nil
-}
-
-func EchoArticleDetailHandler(c echo.Context) error {
-	articleId, err := strconv.Atoi(c.Param("articleId"))
-	if err != nil || articleId < 0 {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusBadRequest, "Invalid or missing 'articleId' query parameter")
-	}
-	if err := c.JSONPretty(http.StatusOK, models.Article1, "    "); err != nil {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
-	}
-	return nil
-}
-
-func EchoPostNiceHandler(c echo.Context) error {
-	if err := c.JSONPretty(http.StatusOK, models.Article1, "    "); err != nil {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
-	}
-	return nil
-}
-
-func EchoPostCommentHandler(c echo.Context) error {
-	if err := c.JSONPretty(http.StatusOK, models.Comment1, "    "); err != nil {
-		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
-	}
-	return nil
 }

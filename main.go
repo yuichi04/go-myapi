@@ -34,9 +34,11 @@ func main() {
 	/*
 	  サーバ起動
 	*/
-	log.Println("server start at port 8080")
 	// 標準パッケージ
-	// log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("server start at port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
+
 	// Echo
-	log.Fatal(r.Start(":8080"))
+	// log.Println("echo server start at port 8080")
+	// log.Fatal(r.Start(":8080"))
 }
