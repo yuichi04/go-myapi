@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"go-myapi/helpers"
 	"go-myapi/models"
 	"io"
 	"net/http"
@@ -109,7 +110,7 @@ func EchoPostArticleHandler(c echo.Context) error {
 	article := models.Article1
 	err := c.JSONPretty(http.StatusOK, article, "    ")
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "fail to encode json\n")
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
 	}
 	return nil
 }
@@ -121,14 +122,13 @@ func EchoArticleListHandler(c echo.Context) error {
 	}
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
-		return c.String(http.StatusBadRequest, "Invalid or missing 'page' query parameter")
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusBadRequest, "Invalid or missing 'page' query parameter")
 	}
-	// ダミーデータを使用する
 	articles := []models.Article{models.Article1, models.Article2}
 	// JSON()とJSONPretty()の機能的な違いは整形するか否か
 	// JSONPretty()はデバッグ目的で使用することが推奨（整形する分、オーバーヘッドが増えるため）
 	if err := c.JSONPretty(http.StatusOK, articles, "    "); err != nil {
-		return c.String(http.StatusInternalServerError, "fail to encode json")
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
 	}
 	return nil
 }
@@ -136,19 +136,24 @@ func EchoArticleListHandler(c echo.Context) error {
 func EchoArticleDetailHandler(c echo.Context) error {
 	articleId, err := strconv.Atoi(c.Param("articleId"))
 	if err != nil || articleId < 0 {
-		// errをそのまま返すと500番（Internal Server Error）になるため、400番（Bad Request）を返す
-		// 負の数も不正なパラメータとして扱う
-		return c.String(http.StatusBadRequest, "Invalid query parameter\n")
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusBadRequest, "Invalid or missing 'articleId' query parameter")
 	}
-	resStr := fmt.Sprintf("Article No.%v\n", articleId)
-
-	return c.String(http.StatusOK, resStr)
+	if err := c.JSONPretty(http.StatusOK, models.Article1, "    "); err != nil {
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
+	}
+	return nil
 }
 
 func EchoPostNiceHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "Posting Nice...\n")
+	if err := c.JSONPretty(http.StatusOK, models.Article1, "    "); err != nil {
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
+	}
+	return nil
 }
 
 func EchoPostCommentHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "Posting Comment...\n")
+	if err := c.JSONPretty(http.StatusOK, models.Comment1, "    "); err != nil {
+		return helpers.ReturnErrorInJSONPretty(c, http.StatusInternalServerError, "Fail to encode json")
+	}
+	return nil
 }
