@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"go-myapi/models"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 /*
@@ -40,92 +40,74 @@ func HelloHandler(w http.ResponseWriter, req *http.Request) {
 
 // POST /article のハンドラ
 func PostArticleHandler(w http.ResponseWriter, req *http.Request) {
-	// 1. リクエストボディのデータを格納するためのバイトスライスを用意する処理
-	length, err := strconv.Atoi(req.Header.Get("Content-Length"))
-	if err != nil {
-		http.Error(w, "cannot get content length\n", http.StatusBadRequest)
-		return
-	}
-	reqBodybuffer := make([]byte, length)
-
-	// 2. リクエストボディからデータを読み取り、reqBodybufferに格納
-	if _, err := req.Body.Read(reqBodybuffer); !errors.Is(err, io.EOF) {
-		http.Error(w, "fail to get request body\n", http.StatusBadRequest)
-		return
-	}
-
-	// 3. ボディを Close する
-	defer req.Body.Close()
-
-	// 4. JSONデータを構造体にデコード
 	var reqArticle models.Article
-	if err := json.Unmarshal(reqBodybuffer, &reqArticle); err != nil {
+	// 1. json.NewDecoder(req.Body): req.Body（HTTPリクエストボディ）から読み取るための新しいデコーダを作成
+	// 2. .Decode(&article): 作成したデコーダを使用して、JSONデータを`reqArticle`の変数にデコード（変換）
+	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
-		return
 	}
-
-	// 5. レスポンス用のJSONデータを生成
 	article := reqArticle
-	jsonData, err := json.Marshal(article)
-	if err != nil {
-		http.Error(w, "fail to encode json\n", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(jsonData)
+	// 1. json.NewEncoder(w):（HTTPレスポンスライター）に書き込むための新しいエンコーダを作成
+	// 2. .Encode(article): 作成したエンコーダを使用して、articleの変数をJSONデータにエンコード（変換）し、それを`w`に書き込む
+	json.NewEncoder(w).Encode(article)
 }
 
 // GET /article/list のハンドラ
 func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
-	// GETメソッド以外は許可しない
-	if req.Method != http.MethodGet {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
-	}
-	// GETメソッドのリクエストに対してレスポンスを返す
-	io.WriteString(w, "Article List\n")
-}
-
-// GET /article/1 のハンドラ
-func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
-	// クエリパラメータを取得
 	queryMap := req.URL.Query()
 
-	// pageの値を取得
 	var page int
 	if p, ok := queryMap["page"]; ok && len(p) > 0 {
 		var err error
 		page, err = strconv.Atoi(p[0])
 		if err != nil {
-			http.Error(w, "Invalid query parameter", http.StatusBadRequest)
+			http.Error(w, "invalid query parameter", http.StatusBadRequest)
 			return
 		}
 	} else {
 		page = 1
 	}
 
-	resString := fmt.Sprintf("Article List (page %d)\n", page)
-	io.WriteString(w, resString)
+	log.Println(page)
+
+	articleList := []models.Article{models.Article1, models.Article2}
+	json.NewEncoder(w).Encode(articleList)
+}
+
+// GET /article/1 のハンドラ
+func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
+	parts := strings.Split(req.URL.Path, "/") // URLが`/article/123`の形式であることを想定
+	if len(parts) < 3 {
+		http.Error(w, "Invalid query parameter", http.StatusBadRequest)
+		return
+	}
+	articleID, err := strconv.Atoi(parts[2])
+	if err != nil {
+		http.Error(w, "Invalid query parameter", http.StatusBadRequest)
+		return
+	}
+	log.Println(articleID)
+	article := models.Article1
+	json.NewEncoder(w).Encode(article)
 }
 
 // POST /article/nice のハンドラ
 func PostNiceHandler(w http.ResponseWriter, req *http.Request) {
-	// POSTメソッド以外は許可しない
-	if req.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
+	var reqArticle models.Article
+	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
+		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
-	// POSTメソッドのリクエストに対してレスポンスを返す
-	io.WriteString(w, "Posting Nice...\n")
+
+	article := reqArticle
+	json.NewEncoder(w).Encode(article)
 }
 
 // POST /comment のハンドラ
 func PostCommentHandler(w http.ResponseWriter, req *http.Request) {
-	// POSTメソッド以外は許可しない
-	if req.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
+	var reqComment models.Comment
+	if err := json.NewDecoder(req.Body).Decode(&reqComment); err != nil {
+		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
-	// POSTメソッドのリクエストに対してレスポンスを返す
-	io.WriteString(w, "Posting Comment...\n")
+	comment := reqComment
+	json.NewEncoder(w).Encode(comment)
 }
