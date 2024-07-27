@@ -50,3 +50,11 @@ func main() {
 	// result.RowsAffected の実行結果から、クエリの影響範囲の広さを調べる
 	fmt.Println(result.RowsAffected())
 }
+
+/*
+トランザクションを利用する流れ
+1. トランザクションを貼る（begin）sql.DB型 の Beginメソッド
+2. クエリの実行
+3. すべてのクエリ実行が成功した場合には、コミットして結果を確定させる（commit）sql.TxのCommitメソッド
+4. 一部のクエリ実行が失敗した場合には、ロールバックして結果を無かったことにする（rollback）sql.TxのRollbackメソッド
+*/
