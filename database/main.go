@@ -27,38 +27,26 @@ func main() {
 	// プログラムが終了するとき、コネクションが close されるようにする
 	defer db.Close()
 
-	articleID := 1000
-	const sqlStr = `
-		select *
-		from articles
-		where article_id = ?;
-	`
-
-	// sqlStr内に埋め込まれたプレースホルダー?に
-	// articleID の値を入れてクエリを実行
-	row := db.QueryRow(sqlStr, articleID)
-	// Err メソッドの中身を確認
-	if err := row.Err(); err != nil {
-		// データ取得件数が0件だった場合は
-		// データ読み出し処理には移らずに終了
-		fmt.Println(err)
-		return
+	// データを挿入する処理
+	article := models.Article{
+		Title:    "insert test",
+		Contents: "Can I insert data correctly?",
+		UserName: "saki",
 	}
-
-	var article models.Article
-	var createdTime sql.NullTime
-
-	// Scan メソッドを利用して、article と createdTime にデータを格納する
-	err = row.Scan(&article.ID, &article.Title, &article.Contents,
-		&article.UserName, &article.NiceNum, &createdTime)
+	const sqlStr = `
+		insert into articles (title, contents, username, nice, created_at) values (?, ?, ?, 0, now());
+	`
+	// プレースホルダー?に
+	// article.TItle, article.Contens, article.UserNameを埋め込んでクエリを実行
+	result, err := db.Exec(sqlStr, article.Title, article.Contents, article.UserName)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	if createdTime.Valid {
-		article.CreatedAt = createdTime.Time
-	}
-
-	fmt.Printf("%+v\n", article)
+	// 結果を確認
+	// result.LastInsertId の実行結果から、記事IDが何番になったのかを調べる
+	fmt.Println(result.LastInsertId())
+	// result.RowsAffected の実行結果から、クエリの影響範囲の広さを調べる
+	fmt.Println(result.RowsAffected())
 }
