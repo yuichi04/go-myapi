@@ -27,47 +27,38 @@ func main() {
 	// プログラムが終了するとき、コネクションが close されるようにする
 	defer db.Close()
 
-	// // sql.DB 型の Ping メソッドで疎通確認をする
-	// if err := db.Ping(); err != nil {
-	// 	// 失敗したらエラーを出力
-	// 	fmt.Println(err)
-	// } else {
-	// 	// 成功したらメッセージを出力
-	// 	fmt.Println("connect to DB")
-	// }
-
+	articleID := 1000
 	const sqlStr = `
-		select * from articles;
+		select *
+		from articles
+		where article_id = ?;
 	`
 
-	rows, err := db.Query(sqlStr)
+	// sqlStr内に埋め込まれたプレースホルダー?に
+	// articleID の値を入れてクエリを実行
+	row := db.QueryRow(sqlStr, articleID)
+	// Err メソッドの中身を確認
+	if err := row.Err(); err != nil {
+		// データ取得件数が0件だった場合は
+		// データ読み出し処理には移らずに終了
+		fmt.Println(err)
+		return
+	}
+
+	var article models.Article
+	var createdTime sql.NullTime
+
+	// Scan メソッドを利用して、article と createdTime にデータを格納する
+	err = row.Scan(&article.ID, &article.Title, &article.Contents,
+		&article.UserName, &article.NiceNum, &createdTime)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	defer rows.Close() // Rows型もHTTPリクエストボディ同様「使い終わったらCloseしなければならない」類の構造体
 
-	articleArray := make([]models.Article, 0)
-
-	// rows に存在するレコードそれぞれに対して、繰り返し処理を実行する
-	for rows.Next() {
-		// 変数 article の各フィールドに、取得レコードのデータを入れる
-		// （SQL クエリの select 句から、タイトル・本文・ユーザー名・いいね数が返ってくることはわかっている）
-		var article models.Article
-		var createdTime sql.NullTime
-		err := rows.Scan(&article.ID, &article.Title, &article.Contents,
-			&article.UserName, &article.NiceNum, &createdTime)
-
-		if createdTime.Valid {
-			article.CreatedAt = createdTime.Time
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			articleArray = append(articleArray, article)
-		}
+	if createdTime.Valid {
+		article.CreatedAt = createdTime.Time
 	}
 
-	fmt.Printf("%+v\n", articleArray)
+	fmt.Printf("%+v\n", article)
 }
