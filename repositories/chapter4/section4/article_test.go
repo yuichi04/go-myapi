@@ -111,3 +111,30 @@ func TestInsertArticle(t *testing.T) {
 		testDB.Exec(sqlStr, article.Title, article.Contents, article.UserName)
 	})
 }
+
+// UpdateNiceNum関数のテスト
+func TestUpdateNiceNum(t *testing.T) {
+	articleID := 1
+	before, err := repositories.SelectArticleDetail(testDB, articleID)
+	if err != nil {
+		t.Fatal("fail to get before data")
+	}
+
+	err = repositories.UpdateNiceNum(testDB, articleID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	after, err := repositories.SelectArticleDetail(testDB, articleID)
+	if err != nil {
+		t.Fatal("fail to get after data")
+	}
+
+	if after.NiceNum-before.NiceNum != 1 {
+		t.Error("fail to update nice num")
+	}
+
+	t.Cleanup(func() {
+		repositories.DecreaseNiceNum(testDB, articleID)
+	})
+}

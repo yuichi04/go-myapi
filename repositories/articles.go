@@ -94,7 +94,7 @@ func SelectArticleDetail(db *sql.DB, articleID int) (models.Article, error) {
 
 // いいね数をupdateする関数
 // -> 発生したエラーを返り値にする
-func UpdateNiceNum(db *sql.DB, articleID int) error {
+func updateNiceNum(db *sql.DB, articleID int, increment int) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func UpdateNiceNum(db *sql.DB, articleID int) error {
 	}
 
 	const sqlUpdateNice = `update articles set nice = ? where article_id = ?;`
-	_, err = tx.Exec(sqlUpdateNice, nicenum+1, articleID)
+	_, err = tx.Exec(sqlUpdateNice, nicenum+increment, articleID)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -127,4 +127,12 @@ func UpdateNiceNum(db *sql.DB, articleID int) error {
 	}
 
 	return nil
+}
+
+func UpdateNiceNum(db *sql.DB, articleID int) error {
+	return updateNiceNum(db, articleID, 1)
+}
+
+func DecreaseNiceNum(db *sql.DB, articleID int) error {
+	return updateNiceNum(db, articleID, -1)
 }
