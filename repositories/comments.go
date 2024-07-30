@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"database/sql"
-	"go-myapi/database/models"
+	"go-myapi/models"
 )
 
 // 新規投稿をデータベースにinsertする関数

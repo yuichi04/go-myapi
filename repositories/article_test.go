@@ -31,7 +31,7 @@ func TestSelectArticleDetail(t *testing.T) {
 		Title:    "firstPost",
 		Contents: "This is my first blog",
 		UserName: "saki",
-		NiceNum:  3,
+		NiceNum:  2,
 	}
 
 	// 2.テスト対象となる関数を実行

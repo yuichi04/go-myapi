@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"database/sql"
-	"go-myapi/database/models"
+	"go-myapi/models"
 )
 
 const (
@@ -22,7 +22,7 @@ func InsertArticle(db *sql.DB, article models.Article) (models.Article, error) {
 	newArticle.UserName = article.UserName
 
 	// 構造体`models.Article`を受け取って、それをデータベースに挿入する処理
-	res, err := db.Exec(sqlStr, article.Title, article.Contents, article.UserName, article.NiceNum)
+	res, err := db.Exec(sqlStr, article.Title, article.Contents, article.UserName)
 	if err != nil {
 		return models.Article{}, err
 	}
