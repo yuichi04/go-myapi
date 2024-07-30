@@ -17,7 +17,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func TestSelectARticleList(t *testing.T) {
+func TestSelectArticleList(t *testing.T) {
 	dbUser := "docker"
 	dbPassword := "docker"
 	dbDatabase := "sampledb"
