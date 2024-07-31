@@ -49,3 +49,17 @@ func SelectCommentList(db *sql.DB, articleID int) ([]models.Comment, error) {
 	}
 	return commentArray, nil
 }
+
+// コメントを削除する関数
+func DeleteComment(db *sql.DB, commentID int) error {
+	const sqlStr = `
+		delete from comments
+		where comment_id = ?
+	`
+	_, err := db.Exec(sqlStr, commentID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

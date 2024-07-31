@@ -4,7 +4,7 @@ import (
 	"go-myapi/models"
 )
 
-var ArtcileTestData = []models.Article{
+var ArticleTestData = []models.Article{
 	models.Article{
 		ID:       1,
 		Title:    "firstPost",
@@ -32,4 +32,9 @@ var InsertArticleData = []models.Article{
 		Contents: "testtest2",
 		UserName: "saki",
 	},
+}
+
+var InsertComment = models.Comment{
+	ArticleID: 1,
+	Message:   "insert comment test",
 }

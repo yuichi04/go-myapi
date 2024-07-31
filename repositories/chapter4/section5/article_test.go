@@ -12,7 +12,7 @@ import (
 // SelectArticleList
 // 取得された記事数と期待する記事数が一致すること
 func TestSelectArticleList(t *testing.T) {
-	expectedNum := len(testdata.ArtcileTestData)
+	expectedNum := len(testdata.ArticleTestData)
 	got, err := repositories.SelectArticleList(testDB, 1)
 	if err != nil {
 		t.Fatal(err)
@@ -32,11 +32,11 @@ func TestSelectArticleDetail(t *testing.T) {
 	}{
 		{
 			testTitle: "subtest1",
-			expected:  testdata.ArtcileTestData[0],
+			expected:  testdata.ArticleTestData[0],
 		},
 		{
 			testTitle: "subtest2",
-			expected:  testdata.ArtcileTestData[1],
+			expected:  testdata.ArticleTestData[1],
 		},
 	}
 
@@ -95,17 +95,17 @@ func TestInsertArticle(t *testing.T) {
 // UpdateNiceNum
 // 指定した記事のいいね数が1増加すること
 func TestUpdateNiceNum(t *testing.T) {
-	before, err := repositories.SelectArticleDetail(testDB, testdata.ArtcileTestData[0].ID)
+	before, err := repositories.SelectArticleDetail(testDB, testdata.ArticleTestData[0].ID)
 	if err != nil {
 		t.Fatal("fail to get before data")
 	}
 
-	err = repositories.UpdateNiceNum(testDB, testdata.ArtcileTestData[0].ID)
+	err = repositories.UpdateNiceNum(testDB, testdata.ArticleTestData[0].ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	after, err := repositories.SelectArticleDetail(testDB, testdata.ArtcileTestData[0].ID)
+	after, err := repositories.SelectArticleDetail(testDB, testdata.ArticleTestData[0].ID)
 	if err != nil {
 		t.Fatal("fail to get after data")
 	}
@@ -115,6 +115,6 @@ func TestUpdateNiceNum(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		repositories.DecreaseNiceNum(testDB, testdata.ArtcileTestData[0].ID)
+		repositories.DecreaseNiceNum(testDB, testdata.ArticleTestData[0].ID)
 	})
 }
