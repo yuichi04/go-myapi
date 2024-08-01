@@ -76,6 +76,7 @@ func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
 
 // GET /article/1 のハンドラ
 func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
+	// 1. パスから、取得した記事のIDを得る
 	parts := strings.Split(req.URL.Path, "/") // URLが`/article/123`の形式であることを想定
 	if len(parts) < 3 {
 		http.Error(w, "Invalid query parameter", http.StatusBadRequest)
@@ -87,7 +88,11 @@ func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Println(articleID)
+
+	// 2. 指定IDの記事をデータベースから取得する
 	article := models.Article1
+
+	// 3. 結果をレスポンスに書き込む
 	json.NewEncoder(w).Encode(article)
 }
 
