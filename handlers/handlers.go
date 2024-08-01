@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"go-myapi/models"
+	services "go-myapi/services/chapter5/section1"
 	"io"
 	"log"
 	"net/http"
@@ -87,10 +88,13 @@ func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid query parameter", http.StatusBadRequest)
 		return
 	}
-	log.Println(articleID)
 
 	// 2. 指定IDの記事をデータベースから取得する
-	article := models.Article1
+	article, err := services.GetArticleService(articleID)
+	if err != nil {
+		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		return
+	}
 
 	// 3. 結果をレスポンスに書き込む
 	json.NewEncoder(w).Encode(article)
@@ -98,13 +102,21 @@ func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 
 // POST /article/nice のハンドラ
 func PostNiceHandler(w http.ResponseWriter, req *http.Request) {
+	// POSTリクエストのボディから記事データを取得
 	var reqArticle models.Article
 	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
 
-	article := reqArticle
-	json.NewEncoder(w).Encode(article)
+	// 2. リクエストから取得した記事のいいね数を増加
+	updatedArticle, err := services.PostNiceService(reqArticle)
+	if err != nil {
+		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		return
+	}
+
+	// 3. 更新した記事データをJSON変換して返却
+	json.NewEncoder(w).Encode(updatedArticle)
 }
 
 // POST /comment のハンドラ
