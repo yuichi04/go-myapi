@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"go-myapi/models"
 	"go-myapi/repositories"
 )
@@ -52,6 +53,7 @@ func PostArticleService(article models.Article) (models.Article, error) {
 func GetArticleListService(page int) ([]models.Article, error) {
 	db, err := connectDB()
 	if err != nil {
+		fmt.Println("error")
 		return []models.Article{}, err
 	}
 	defer db.Close()

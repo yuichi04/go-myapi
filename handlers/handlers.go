@@ -3,9 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"go-myapi/models"
-	services "go-myapi/services/chapter5/section1"
+	"go-myapi/services"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,10 +46,14 @@ func PostArticleHandler(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
-	article := reqArticle
+	newArticle, err := services.PostArticleService(reqArticle)
+	if err != nil {
+		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		return
+	}
 	// 1. json.NewEncoder(w):（HTTPレスポンスライター）に書き込むための新しいエンコーダを作成
 	// 2. .Encode(article): 作成したエンコーダを使用して、articleの変数をJSONデータにエンコード（変換）し、それを`w`に書き込む
-	json.NewEncoder(w).Encode(article)
+	json.NewEncoder(w).Encode(newArticle)
 }
 
 // GET /article/list のハンドラ
@@ -69,9 +72,12 @@ func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
 		page = 1
 	}
 
-	log.Println(page)
+	articleList, err := services.GetArticleListService(page)
+	if err != nil {
+		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		return
+	}
 
-	articleList := []models.Article{models.Article1, models.Article2}
 	json.NewEncoder(w).Encode(articleList)
 }
 
@@ -125,6 +131,11 @@ func PostCommentHandler(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewDecoder(req.Body).Decode(&reqComment); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
-	comment := reqComment
-	json.NewEncoder(w).Encode(comment)
+
+	newComment, err := services.PostCommentService(reqComment)
+	if err != nil {
+		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(newComment)
 }

@@ -4,12 +4,12 @@ import (
 	"go-myapi/handlers"
 	"log"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	r := echo.New()
+	/*
+		r := echo.New()
+	*/
 
 	/*
 	  標準パッケージを使ったルーティング
@@ -24,12 +24,15 @@ func main() {
 	/*
 	  Echoを使ったルーティング
 	*/
-	r.GET("/echo-hello", handlers.EchoHelloHandler)
-	r.POST("/echo-article", handlers.EchoPostArticleHandler)
-	r.GET("/echo-article/list", handlers.EchoArticleListHandler)
-	r.GET("/echo-article/:articleId", handlers.EchoArticleDetailHandler)
-	r.POST("/echo-article/nice", handlers.EchoPostNiceHandler)
-	r.POST("/echo-comment", handlers.EchoPostCommentHandler)
+
+	/*
+		r.GET("/echo-hello", handlers.EchoHelloHandler)
+		r.POST("/echo-article", handlers.EchoPostArticleHandler)
+		r.GET("/echo-article/list", handlers.EchoArticleListHandler)
+		r.GET("/echo-article/:articleId", handlers.EchoArticleDetailHandler)
+		r.POST("/echo-article/nice", handlers.EchoPostNiceHandler)
+		r.POST("/echo-comment", handlers.EchoPostCommentHandler)
+	*/
 
 	/*
 	  サーバ起動
@@ -39,6 +42,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
 	// Echo
-	// log.Println("echo server start at port 8080")
-	// log.Fatal(r.Start(":8080"))
+	/*
+		log.Println("echo server start at port 8080")
+		log.Fatal(r.Start(":8080"))
+	*/
 }
