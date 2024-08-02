@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-myapi/models"
 	"go-myapi/services"
 	"io"
@@ -51,6 +52,13 @@ func PostArticleHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
 		return
 	}
+	// デバッグ用（レスポンスデータを見やすく整形）
+	formattedJSON, err := json.MarshalIndent(newArticle, "", "    ")
+	if err != nil {
+		http.Error(w, "fail to format json\n", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(string(formattedJSON))
 	// 1. json.NewEncoder(w):（HTTPレスポンスライター）に書き込むための新しいエンコーダを作成
 	// 2. .Encode(article): 作成したエンコーダを使用して、articleの変数をJSONデータにエンコード（変換）し、それを`w`に書き込む
 	json.NewEncoder(w).Encode(newArticle)
@@ -78,6 +86,14 @@ func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// デバッグ用（レスポンスデータを見やすく整形）
+	formattedJSON, err := json.MarshalIndent(articleList, "", "    ")
+	if err != nil {
+		http.Error(w, "fail to format json\n", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(string(formattedJSON))
+
 	json.NewEncoder(w).Encode(articleList)
 }
 
@@ -102,6 +118,14 @@ func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// デバッグ用（レスポンスデータを見やすく整形）
+	formattedJSON, err := json.MarshalIndent(article, "", "    ")
+	if err != nil {
+		http.Error(w, "fail to format json\n", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(string(formattedJSON))
+
 	// 3. 結果をレスポンスに書き込む
 	json.NewEncoder(w).Encode(article)
 }
@@ -120,6 +144,14 @@ func PostNiceHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
 		return
 	}
+
+	// デバッグ用（レスポンスデータを見やすく整形）
+	formattedJSON, err := json.MarshalIndent(updatedArticle, "", "    ")
+	if err != nil {
+		http.Error(w, "fail to format json\n", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(string(formattedJSON))
 
 	// 3. 更新した記事データをJSON変換して返却
 	json.NewEncoder(w).Encode(updatedArticle)
