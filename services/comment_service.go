@@ -5,19 +5,20 @@ import (
 	"go-myapi/repositories"
 )
 
-// PostCommentHandler用のサービス関数
-// 引数の情報を元に新しいコメントを作り、結果を返却
-func PostCommentService(comment models.Comment) (models.Comment, error) {
-	db, err := connectDB()
-	if err != nil {
-		return models.Comment{}, err
-	}
-	defer db.Close()
-
-	newComment, err := repositories.InsertComment(db, comment)
+func (s *MyAppService) PostCommentService(comment models.Comment) (models.Comment, error) {
+	newComment, err := repositories.InsertComment(s.db, comment)
 	if err != nil {
 		return models.Comment{}, err
 	}
 
 	return newComment, nil
+}
+
+func (s *MyAppService) GetCommentListService(article models.Article) ([]models.Comment, error) {
+	commentList, err := repositories.SelectCommentList(s.db, article.ID)
+	if err != nil {
+		return []models.Comment{}, err
+	}
+
+	return commentList, nil
 }
