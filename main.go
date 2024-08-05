@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"go-myapi/controllers"
+	"go-myapi/routers"
 	"go-myapi/services"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 )
 
 var (
@@ -22,23 +22,21 @@ var (
 )
 
 func main() {
+	// 1. サーバー全体で使用するsql.DB型を1つ生成する
 	db, err := sql.Open("mysql", dbConn)
 	if err != nil {
 		log.Println("fail to connect DB")
 		return
 	}
 
+	// 2. sql.DB型をもとに、サーバー全体で使用するサービス構造体MyAppServiceを1つ生成する
 	ser := services.NewMyAppService(db)
+
+	// 3. MyAppService型をもとに、サーバー全体で使用するコントローラ構造体MyAppControllerを1つ生成する
 	con := controllers.NewMyAppController(ser)
 
-	r := mux.NewRouter()
-
-	r.HandleFunc("/article", con.PostArticleHandler).Methods(http.MethodPost)
-	r.HandleFunc("/article/list", con.ArticleListHandler).Methods(http.MethodGet)
-	r.HandleFunc("/article/{id:[0-9]+}",
-		con.ArticleDetailHandler).Methods(http.MethodGet)
-	r.HandleFunc("/article/nice", con.PostNiceHandler).Methods(http.MethodPost)
-	r.HandleFunc("/comment", con.PostCommentHandler).Methods(http.MethodPost)
+	// 4. コントローラ型MyAppControllerのハンドラメソッドとパストの関連付けを行う
+	r := routers.NewRouter(con)
 
 	log.Println("server start at port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
