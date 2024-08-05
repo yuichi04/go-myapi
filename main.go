@@ -1,49 +1,45 @@
 package main
 
 import (
-	"go-myapi/handlers"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+
+	"go-myapi/controllers"
+	"go-myapi/services"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
+)
+
+var (
+	dbUser     = os.Getenv("DB_USER")
+	dbPassword = os.Getenv("DB_PASSWORD")
+	dbDatabase = os.Getenv("DB_NAME")
+	dbConn     = fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?parseTime=true", dbUser, dbPassword, dbDatabase)
 )
 
 func main() {
-	/*
-		r := echo.New()
-	*/
+	db, err := sql.Open("mysql", dbConn)
+	if err != nil {
+		log.Println("fail to connect DB")
+		return
+	}
 
-	/*
-	  標準パッケージを使ったルーティング
-	*/
-	http.HandleFunc("/hello", handlers.HelloHandler)
-	http.HandleFunc("/article", handlers.PostArticleHandler)
-	http.HandleFunc("/article/list", handlers.ArticleListHandler)
-	http.HandleFunc("/article/1", handlers.ArticleDetailHandler)
-	http.HandleFunc("/article/nice", handlers.PostNiceHandler)
-	http.HandleFunc("/comment", handlers.PostCommentHandler)
+	ser := services.NewMyAppService(db)
+	con := controllers.NewMyAppController(ser)
 
-	/*
-	  Echoを使ったルーティング
-	*/
+	r := mux.NewRouter()
 
-	/*
-		r.GET("/echo-hello", handlers.EchoHelloHandler)
-		r.POST("/echo-article", handlers.EchoPostArticleHandler)
-		r.GET("/echo-article/list", handlers.EchoArticleListHandler)
-		r.GET("/echo-article/:articleId", handlers.EchoArticleDetailHandler)
-		r.POST("/echo-article/nice", handlers.EchoPostNiceHandler)
-		r.POST("/echo-comment", handlers.EchoPostCommentHandler)
-	*/
+	r.HandleFunc("/article", con.PostArticleHandler).Methods(http.MethodPost)
+	r.HandleFunc("/article/list", con.ArticleListHandler).Methods(http.MethodGet)
+	r.HandleFunc("/article/{id:[0-9]+}",
+		con.ArticleDetailHandler).Methods(http.MethodGet)
+	r.HandleFunc("/article/nice", con.PostNiceHandler).Methods(http.MethodPost)
+	r.HandleFunc("/comment", con.PostCommentHandler).Methods(http.MethodPost)
 
-	/*
-	  サーバ起動
-	*/
-	// 標準パッケージ
 	log.Println("server start at port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-
-	// Echo
-	/*
-		log.Println("echo server start at port 8080")
-		log.Fatal(r.Start(":8080"))
-	*/
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
