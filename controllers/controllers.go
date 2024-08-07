@@ -2,31 +2,19 @@ package controllers
 
 import (
 	"encoding/json"
+	"go-myapi/controllers/services"
 	"go-myapi/models"
-	"go-myapi/services"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
 type MyAppController struct {
-	service *services.MyAppService
+	service services.MyAppServicer
 }
 
-func NewMyAppController(s *services.MyAppService) *MyAppController {
+func NewMyAppController(s services.MyAppServicer) *MyAppController {
 	return &MyAppController{service: s}
-}
-
-// GET /hello のハンドラ
-func HelloHandler(w http.ResponseWriter, req *http.Request) {
-	// GETメソッド以外は許可しない
-	if req.Method != http.MethodGet {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
-	}
-	// GETメソッドのリクエストに対してレスポンスを返す
-	io.WriteString(w, "Hello, World!\n")
 }
 
 func (c *MyAppController) PostArticleHandler(w http.ResponseWriter, req *http.Request) {
