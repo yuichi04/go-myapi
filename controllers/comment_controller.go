@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"go-myapi/controllers/services"
 	"go-myapi/models"
-	"net/http"
 )
 
 type CommentController struct {
@@ -15,18 +16,17 @@ func NewCommentController(s services.CommentServicer) *CommentController {
 	return &CommentController{service: s}
 }
 
-func (c *CommentController) PostCommentHandler(w http.ResponseWriter, req *http.Response) {
+// POST /comment のハンドラ
+func (c *CommentController) PostCommentHandler(w http.ResponseWriter, req *http.Request) {
 	var reqComment models.Comment
 	if err := json.NewDecoder(req.Body).Decode(&reqComment); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
-		return
 	}
 
-	newComment, err := c.service.PostcommentService(reqComment)
+	comment, err := c.service.PostCommentService(reqComment)
 	if err != nil {
 		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
 		return
 	}
-
-	json.NewEncoder(w).Encode(newComment)
+	json.NewEncoder(w).Encode(comment)
 }
