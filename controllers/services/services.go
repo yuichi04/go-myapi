@@ -11,6 +11,6 @@ type ArticleServicer interface {
 }
 
 // /commentを引き受けるサービス
-type CommentSErvicer interface {
+type CommentServicer interface {
 	PostcommentService(comment models.Comment) (models.Comment, error)
 }
