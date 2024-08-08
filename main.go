@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"go-myapi/routers"
+	"go-myapi/api"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// 2. コントローラ型MyAppControllerのハンドラメソッドとパストの関連付けを行う
-	r := routers.NewRouter(db)
+	r := api.NewRouter(db)
 
 	log.Println("server start at port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
