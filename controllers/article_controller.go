@@ -82,7 +82,7 @@ func (c *ArticleController) ArticleDetailHandler(w http.ResponseWriter, req *htt
 
 func (c *ArticleController) PostNiceHandler(w http.ResponseWriter, req *http.Request) {
 	var reqArticle models.Article
-	if err := json.NewDecoder(req.Body).Decode(reqArticle); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 		return
 	}
