@@ -3,7 +3,9 @@ package apperrors
 type MyAppError struct {
 	ErrCode        // レスポンスとログに表示するエラーコード
 	Message string // レスポンスに表示するエラーメッセージ
-	Err     error  // エラーチェーンのための内部エラー
+
+	// Error() stringメソッドを持つ構造体はerrorインターフェースを満たし、独自エラー型として扱うことができる
+	Err error `json:"-"` // エラーチェーンのための内部エラー `json:"-"`:jsonエンコードされないように指定
 }
 
 // Errorメソッドは、その構造体をエラーとして扱うためにMUSTでつけるメソッド
