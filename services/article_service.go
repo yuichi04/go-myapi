@@ -43,7 +43,13 @@ func (s *MyAppService) PostArticleService(article models.Article) (models.Articl
 func (s *MyAppService) GetArticleListService(page int) ([]models.Article, error) {
 	articleList, err := repositories.SelectArticleList(s.db, page)
 	if err != nil {
-		return []models.Article{}, err
+		err = apperrors.GetDataFailed.Wrap(err, "fail to get data")
+		return nil, err
+	}
+
+	if len(articleList) == 0 {
+		err := apperrors.NAData.Wrap(ErrNoData, "no data")
+		return nil, err
 	}
 
 	return articleList, nil
@@ -52,6 +58,12 @@ func (s *MyAppService) GetArticleListService(page int) ([]models.Article, error)
 func (s *MyAppService) PostNiceService(article models.Article) (models.Article, error) {
 	err := repositories.UpdateNiceNum(s.db, article.ID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = apperrors.NoTargetData.Wrap(err, "does not exist target article")
+			return models.Article{}, err
+		}
+
+		err = apperrors.UpdateDataFailed.Wrap(err, "fail to update nice count")
 		return models.Article{}, err
 	}
 
