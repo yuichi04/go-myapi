@@ -1,39 +1,41 @@
 package repositories_test
 
 import (
-	"go-myapi/repositories"
-	"go-myapi/repositories/testdata"
 	"testing"
+
+	"go-myapi/models"
+	"go-myapi/repositories"
 )
 
-// SelectCommentList
-// 指定した記事のコメントリストが取得されること
+// SelectCommentList関数のテスト
 func TestSelectCommentList(t *testing.T) {
-	got, err := repositories.SelectCommentList(testDB, testdata.ArticleTestData[0].ID)
+	articleID := 1
+	got, err := repositories.SelectCommentList(testDB, articleID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, comment := range got {
-		if comment.ArticleID != testdata.ArticleTestData[0].ID {
-			t.Errorf("want comment of articleID %d but got ID %d\n",
-				comment.ArticleID,
-				testdata.ArticleTestData[0].ID,
-			)
+		if comment.ArticleID != articleID {
+			t.Errorf("want comment of articleID %d but got ID %d\n", articleID, comment.ArticleID)
 		}
 	}
 }
 
+// InsertComment関数のテスト
 func TestInsertComment(t *testing.T) {
-	newComment, err := repositories.InsertComment(testDB, testdata.InsertComment)
-	if err != nil {
-		t.Fatal(err)
+	comment := models.Comment{
+		ArticleID: 1,
+		Message:   "CommentInsertTest",
 	}
-	if newComment.Message != testdata.InsertComment.Message {
-		t.Errorf("want new comment message %s but got message %s\n",
-			newComment.Message,
-			testdata.InsertComment.Message,
-		)
+
+	expectedCommentID := 3
+	newComment, err := repositories.InsertComment(testDB, comment)
+	if err != nil {
+		t.Error(err)
+	}
+	if newComment.CommentID != expectedCommentID {
+		t.Errorf("new comment id is expected %d but got %d\n", expectedCommentID, newComment.CommentID)
 	}
 
 	t.Cleanup(func() {
@@ -41,6 +43,6 @@ func TestInsertComment(t *testing.T) {
 			delete from comments
 			where message = ?
 		`
-		testDB.Exec(sqlStr, testdata.InsertComment.Message)
+		testDB.Exec(sqlStr, comment.Message)
 	})
 }

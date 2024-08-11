@@ -3,11 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"go-myapi/api"
 	"log"
 	"net/http"
 	"os"
-
-	"go-myapi/api"
 
 	_ "github.com/go-sql-driver/mysql"
 )

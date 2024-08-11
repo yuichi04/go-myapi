@@ -27,7 +27,7 @@ func connectDB() error {
 }
 
 func setupTestData() error {
-	cmd := exec.Command("mysql", "-h", "127.0.0.1", "-u", "docker", "sampledb", "--password=docker", "-e", "source ../../testdata/sql/setupDB.sql")
+	cmd := exec.Command("mysql", "-h", "127.0.0.1", "-u", "docker", "sampledb", "--password=docker", "-e", "source ./testdata/setupDB.sql")
 	err := cmd.Run()
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func setupTestData() error {
 }
 
 func cleanupDB() error {
-	cmd := exec.Command("mysql", "-h", "127.0.0.1", "-u", "docker", "sampledb", "--password=docker", "-e", "source ../../testdata/sql/cleanupDB.sql")
+	cmd := exec.Command("mysql", "-h", "127.0.0.1", "-u", "docker", "sampledb", "--password=docker", "-e", "source ./testdata/cleanupDB.sql")
 	err := cmd.Run()
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func setup() error {
 		return err
 	}
 	if err := setupTestData(); err != nil {
-		fmt.Println("setup", err)
+		fmt.Println("setup")
 		return err
 	}
 	return nil
