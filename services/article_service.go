@@ -26,75 +26,78 @@ import (
 	"go-myapi/apperrors"
 	"go-myapi/models"
 	"go-myapi/repositories"
-	"sync"
 )
 
 func (s *MyAppService) GetArticleService(articleID int) (models.Article, error) {
-	// 記事の詳細を格納するための変数を宣言
+	// 1. 変数の初期化
 	var article models.Article
-	// コメントリストを格納するための変数を宣言
 	var commentList []models.Comment
-	// 記事取得エラーとコメント取得エラーを格納するための変数を宣言
 	var articleGetErr, commentGetErr error
 
-	// 記事取得時の排他制御用のミューテックスを宣言
-	var amu sync.Mutex
-	// コメント取得時の排他制御用のミューテックスを宣言
-	var cmu sync.Mutex
+	// 2. チャネルの作成
+	type articleResult struct {
+		article models.Article
+		err     error
+	}
+	// 記事用のチャネル
+	articleChan := make(chan articleResult)
+	defer close(articleChan)
 
-	// ゴールーチンの完了を待つためのWaitGroupを宣言
-	var wg sync.WaitGroup
+	// 3. ゴールーチンの起動
+	// ch には articleChan が渡ってくる
+	go func(ch chan<- articleResult, db *sql.DB, articleID int) {
+		article, err := repositories.SelectArticleDetail(s.db, articleID)
+		ch <- articleResult{article: article, err: err}
+	}(articleChan, s.db, articleID)
 
-	// 2つのゴールーチンを待つことをWaitGroupに通知
-	wg.Add(2)
+	// 2. チャネルの作成
+	type commentResult struct {
+		commentList *[]models.Comment
+		err         error
+	}
+	// コメント用のチャネル
+	commentChan := make(chan commentResult)
+	defer close(commentChan)
 
-	// 記事の詳細を取得するゴールーチンを開始
-	go func(db *sql.DB, articleID int) {
-		// ゴールーチンが終了したことをWaitGroupに通知
-		defer wg.Done()
-		// 記事取得時の排他制御を開始
-		amu.Lock()
-		// 記事の詳細を取得し、変数に格納
-		article, articleGetErr = repositories.SelectArticleDetail(s.db, articleID)
-		// 記事取得時の排他制御を終了
-		amu.Unlock()
-	}(s.db, articleID)
-	// 記事取得エラーが発生した場合の処理
+	// 3. ゴールーチンの起動
+	// ch には commentChan が渡ってくる
+	go func(ch chan<- commentResult, db *sql.DB, articleID int) {
+		commentList, err := repositories.SelectCommentList(s.db, articleID)
+		ch <- commentResult{commentList: &commentList, err: err}
+	}(commentChan, s.db, articleID)
+
+	// 4. 結果の受け取り
+	// いずれかのcaseが2回実行されたら次の処理に移る
+	// ただし、実質、各caseは1回ずつしか実行されないようになっているため、すべてのcaseが実行されたら次の処理に移る
+	for i := 0; i < 2; i++ {
+		// select文：複数のチャネル操作を同時に待つための構文
+		select {
+		case ar := <-articleChan:
+			article, articleGetErr = ar.article, ar.err
+		case cr := <-commentChan:
+			commentList, commentGetErr = *cr.commentList, cr.err
+		}
+	}
+
+	// 5. エラーチェック
 	if articleGetErr != nil {
-		// エラーがデータなしの場合の処理
 		if errors.Is(articleGetErr, sql.ErrNoRows) {
 			err := apperrors.NAData.Wrap(articleGetErr, "no data")
 			return models.Article{}, err
 		}
-		// その他のエラーの場合の処理
 		err := apperrors.GetDataFailed.Wrap(articleGetErr, "fail to get data")
 		return models.Article{}, err
 	}
 
-	// コメントリストを取得するゴールーチンを開始
-	go func(db *sql.DB, articleID int) {
-		// ゴールーチンが終了したことをWaitGroupに通知
-		defer wg.Done()
-		// コメント取得時の排他制御を開始
-		cmu.Lock()
-		// コメントリストを取得し、変数に格納
-		commentList, commentGetErr = repositories.SelectCommentList(s.db, articleID)
-		// コメント取得時の排他制御を終了
-		cmu.Unlock()
-	}(s.db, articleID)
-	// コメント取得エラーが発生した場合の処理
 	if commentGetErr != nil {
 		err := apperrors.GetDataFailed.Wrap(commentGetErr, "fail to get data")
 		return models.Article{}, err
 	}
 
-	// すべてのゴールーチンが完了するのを待つ
-	wg.Wait()
-
-	// 取得したコメントリストを記事に追加
+	// 6. 結果の統合
 	article.CommentList = append(article.CommentList, commentList...)
 
-	// 記事の詳細を返す
+	// 7. 結果の返却
 	return article, nil
 }
 
