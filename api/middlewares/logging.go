@@ -24,15 +24,30 @@ func (rsw *resLoggingWriter) WriteHeader(code int) {
 	rsw.ResponseWriter.WriteHeader(code)
 }
 
+/*
+http.RequestにはContextが含まれている
+ただ、このContextは非公開フィールドであるため、開発者が直接参照する・値をセットすることはできない
+= ロギング処理で利用することはできない
+
+net/httpパッケージに含まれていて、Request型に現在セットされているContextを取り出すためのContextメソッドと、
+新しくリクエスト型にコンテキストをセットするためのWithContextメソッドが用意されている
+*/
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// リクエスト情報をロギング
-		log.Println("req: ", req.RequestURI, req.Method)
+		traceID := newTraceID()
 
+		// リクエスト情報をロギング
+		log.Printf("[%d]%s %s\n", traceID, req.RequestURI, req.Method)
+
+		ctx := SetTraceID(req.Context(), traceID)
+		req = req.WithContext(ctx)
 		rlw := NewResLoggingWrighter(w)
 
 		next.ServeHTTP(rlw, req)
 
-		log.Println("res: ", rlw.code)
+		// レスポンス情報をロギング
+		log.Printf("[%d]res: %d", traceID, rlw.code)
 	})
 }
+
+// Go公式ではコンテキストが絡んだ処理を行う関数・メソッドには明示的にctxと言うcontext.Context型の第一引数を用意することを推奨している
