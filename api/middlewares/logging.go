@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"go-myapi/common"
 	"log"
 	"net/http"
 )
@@ -39,7 +40,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		// リクエスト情報をロギング
 		log.Printf("[%d]%s %s\n", traceID, req.RequestURI, req.Method)
 
-		ctx := SetTraceID(req.Context(), traceID)
+		ctx := common.SetTraceID(req.Context(), traceID)
 		req = req.WithContext(ctx)
 		rlw := NewResLoggingWrighter(w)
 
